@@ -17,27 +17,29 @@ def run_admm():
     reconstructor = ADMM(psf)
 
     res = reconstructor.apply(image, disp_iter=50)
-    img = res[0]
-
+    reconstructed = res[0]
     plt.show()
 
-    original = load_image(to_absolute_path(ORIGINAL_IMAGE), shape=img.shape)
+    original = load_image(to_absolute_path(ORIGINAL_IMAGE), shape=reconstructed.shape)
     plot_image(original)
     plt.title("Ground truth image")
     plt.show()
 
+    evaluate_reconstruction(reconstructed, original)
+
+
+def evaluate_reconstruction(reconstructed, original):
     # compute metrics
     lpips_func = lpip.LearnedPerceptualImagePatchSimilarity(net_type="vgg", normalize=True)
     psnr_funct = psnr.PeakSignalNoiseRatio()
-
-    img_torch = torch.from_numpy(img).float()  # TODO
+    img_torch = torch.from_numpy(reconstructed).float()
     original_torch = torch.from_numpy(original).unsqueeze(0)
 
     # channel as first dimension
     img_torch = img_torch.movedim(-1, -3)
     original_torch = original_torch.movedim(-1, -3)
 
-    # normalize, TODO img max value is 14 which seems strange
+    # normalize
     img_torch = img_torch / torch.amax(img_torch)
 
     # compute metrics

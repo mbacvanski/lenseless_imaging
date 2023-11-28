@@ -115,7 +115,7 @@ def resize(img, factor=None, shape=None):
 
 def plot_image(img) -> plt.Axes:
     """
-    Plot image data.
+    Plot image data, correcting for gamma
     """
 
     # if we have only 1 depth, remove the axis
