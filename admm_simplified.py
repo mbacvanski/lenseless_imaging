@@ -3,8 +3,8 @@ import numpy as np
 import torch
 from torchmetrics.image import lpip, psnr
 
-from models.admm import ADMM
-from models.reconstructor import ReconstructionAlgorithm
+from algorithms.admm import ADMM
+from algorithms.reconstruction_algorithm import ReconstructionAlgorithm
 from utils import load_psf_and_image, to_absolute_path, plot_image, load_image
 
 ORIGINAL_IMAGE = "data/lensed/im172.npy"

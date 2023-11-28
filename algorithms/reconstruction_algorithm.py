@@ -32,7 +32,7 @@ class ReconstructionAlgorithm(abc.ABC):
         Parameters
         ----------
             psf : :py:class:`~numpy.ndarray` or :py:class:`~torch.Tensor`
-                Point spread function (PSF) that models forward propagation.
+                Point spread function (PSF) that algorithms forward propagation.
                 Must be of shape (depth, height, width, channels) even if
                 depth = 1 and channels = 1. You can use :py:func:`~lensless.io.load_psf`
                 to load a PSF from a file such that it is in the correct format.

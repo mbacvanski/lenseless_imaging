@@ -150,70 +150,6 @@ def plot_image(img) -> plt.Axes:
     return ax
 
 
-class RealFFTConvolve2D:
-    def __init__(self, psf, norm="ortho"):
-        """
-        Linear operator that performs convolution in Fourier domain, and assumes
-        real-valued signals.
-
-        Parameters
-        ----------
-        psf :py:class:`~numpy.ndarray` or :py:class:`~torch.Tensor`
-            Point spread function (PSF) that models forward propagation.
-            Must be of shape (depth, height, width, channels) even if
-            depth = 1 and channels = 1. You can use :py:func:`~lensless.io.load_psf`
-            to load a PSF from a file such that it is in the correct format.
-        norm : str, optional
-            Normalization to use for FFT. Defaults to 'ortho'.
-        """
-
-        assert len(psf.shape) == 4, "Expected 4D PSF of shape (depth, width, height, channels)"
-        assert psf.shape[3] == 3 or psf.shape[3] == 1
-
-        self._psf = psf.astype(np.float32)
-        self._psf_shape = np.array(self._psf.shape)
-
-        # cropping / padding indexes
-        self._padded_shape = 2 * self._psf_shape[-3:-1] - 1
-        self._padded_shape = np.array([next_fast_len(i) for i in self._padded_shape])
-        self._padded_shape = list(np.r_[self._psf_shape[-4], self._padded_shape, self._psf_shape[-1]])
-        self._start_idx = (self._padded_shape[-3:-1] - self._psf_shape[-3:-1]) // 2
-        self._end_idx = self._start_idx + self._psf_shape[-3:-1]
-
-        # precompute filter in frequency domain
-        self._H = fft.rfft2(self.pad(self._psf), axes=(-3, -2), norm=norm)
-        self._Hadj = np.conj(self._H)
-        self._padded_data = np.zeros(self._padded_shape)
-
-    def crop(self, x):
-        return x[..., self._start_idx[0]: self._end_idx[0], self._start_idx[1]: self._end_idx[1], :]
-
-    def pad(self, v):
-        if len(v.shape) == 5:
-            batch_size = v.shape[0]
-        elif len(v.shape) == 4:
-            batch_size = 1
-        else:
-            raise ValueError("Expected 4D or 5D tensor")
-        shape = [batch_size] + self._padded_shape
-        vpad = np.zeros(shape).astype(v.dtype)
-        vpad[..., self._start_idx[0]: self._end_idx[0], self._start_idx[1]: self._end_idx[1], :] = v
-        return vpad
-
-    def convolve(self, x):
-        """ Convolve with pre-computed FFT of provided PSF. """
-        self._padded_data[:] = x  # .astype(self.dtype)
-        conv_output = fft.ifftshift(fft.irfft2(fft.rfft2(self._padded_data, axes=(-3, -2)) * self._H, axes=(-3, -2)), axes=(-3, -2), )
-        return conv_output
-
-    def deconvolve(self, y):
-        """ Deconvolve with adjoint of pre-computed FFT of provided PSF. """
-        self._padded_data[:] = y  # .astype(self.dtype)
-        deconv_output = fft.ifftshift(fft.irfft2(fft.rfft2(self._padded_data, axes=(-3, -2)) * self._Hadj, axes=(-3, -2)), axes=(-3, -2), )
-
-        return deconv_output
-
-
 def finite_diff_gram(shape):
     """Gram matrix of finite difference operator."""
     gram = np.zeros(shape, dtype=np.float32)
@@ -373,3 +309,67 @@ def load_psf(fp, downsample=1, return_float=True, bg_pix=(5, 25), return_bg=Fals
         bg /= max_val
     if return_bg:
         return psf, bg
+
+
+class RealFFTConvolve2D:
+    def __init__(self, psf, norm="ortho"):
+        """
+        Linear operator that performs convolution in Fourier domain, and assumes
+        real-valued signals.
+
+        Parameters
+        ----------
+        psf :py:class:`~numpy.ndarray` or :py:class:`~torch.Tensor`
+            Point spread function (PSF) that algorithms forward propagation.
+            Must be of shape (depth, height, width, channels) even if
+            depth = 1 and channels = 1. You can use :py:func:`~lensless.io.load_psf`
+            to load a PSF from a file such that it is in the correct format.
+        norm : str, optional
+            Normalization to use for FFT. Defaults to 'ortho'.
+        """
+
+        assert len(psf.shape) == 4, "Expected 4D PSF of shape (depth, width, height, channels)"
+        assert psf.shape[3] == 3 or psf.shape[3] == 1
+
+        self._psf = psf.astype(np.float32)
+        self._psf_shape = np.array(self._psf.shape)
+
+        # cropping / padding indexes
+        self._padded_shape = 2 * self._psf_shape[-3:-1] - 1
+        self._padded_shape = np.array([next_fast_len(i) for i in self._padded_shape])
+        self._padded_shape = list(np.r_[self._psf_shape[-4], self._padded_shape, self._psf_shape[-1]])
+        self._start_idx = (self._padded_shape[-3:-1] - self._psf_shape[-3:-1]) // 2
+        self._end_idx = self._start_idx + self._psf_shape[-3:-1]
+
+        # precompute filter in frequency domain
+        self._H = fft.rfft2(self.pad(self._psf), axes=(-3, -2), norm=norm)
+        self._Hadj = np.conj(self._H)
+        self._padded_data = np.zeros(self._padded_shape)
+
+    def crop(self, x):
+        return x[..., self._start_idx[0]: self._end_idx[0], self._start_idx[1]: self._end_idx[1], :]
+
+    def pad(self, v):
+        if len(v.shape) == 5:
+            batch_size = v.shape[0]
+        elif len(v.shape) == 4:
+            batch_size = 1
+        else:
+            raise ValueError("Expected 4D or 5D tensor")
+        shape = [batch_size] + self._padded_shape
+        vpad = np.zeros(shape).astype(v.dtype)
+        vpad[..., self._start_idx[0]: self._end_idx[0], self._start_idx[1]: self._end_idx[1], :] = v
+        return vpad
+
+    def convolve(self, x):
+        """ Convolve with pre-computed FFT of provided PSF. """
+        self._padded_data[:] = x  # .astype(self.dtype)
+        conv_output = fft.ifftshift(fft.irfft2(fft.rfft2(self._padded_data, axes=(-3, -2)) * self._H, axes=(-3, -2)), axes=(-3, -2), )
+        return conv_output
+
+    def deconvolve(self, y):
+        """ Deconvolve with adjoint of pre-computed FFT of provided PSF. """
+        self._padded_data[:] = y  # .astype(self.dtype)
+        deconv_output = fft.ifftshift(fft.irfft2(fft.rfft2(self._padded_data, axes=(-3, -2)) * self._Hadj, axes=(-3, -2)), axes=(-3, -2), )
+
+        return deconv_output

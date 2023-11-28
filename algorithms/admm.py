@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import fft
 
-from models.reconstructor import ReconstructionAlgorithm
+from algorithms.reconstruction_algorithm import ReconstructionAlgorithm
 from utils import finite_diff_gram, finite_diff, finite_diff_adj, soft_thresh, RealFFTConvolve2D
 
 
