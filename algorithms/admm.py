@@ -44,7 +44,7 @@ class ADMM(ReconstructionAlgorithm):
         self._mu3 = mu3
         self._tau = tau
 
-        self._convolver = RealFFTConvolve2D(psf)
+        self._convolver = RealFFTConvolve2D(psf, norm=norm)
         self._padded_shape = self._convolver._padded_shape
 
         # 3D ADMM is not supported yet
