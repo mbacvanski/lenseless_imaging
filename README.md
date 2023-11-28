@@ -1,13 +1,14 @@
 # Getting Data
 
-A 200 dimage subset of the X dataset can be found here, which includes the PSF file, lensed, and diffuser camera files. For some reason only the `.npy` files are working at the moment.
+A 200 image subset of the X dataset can be found here, which includes the PSF file, lensed, and diffuser camera files.
+For some reason only the `.npy` files are working at the moment.
 
 https://drive.switch.ch/index.php/s/vmAZzryGI8U8rcE
 
 # Organization
 
-Different models go in the `algorithms` folder, and inherit from the `ReconstructionAlgorithm` abstract class. The abstract class provides a method `apply(image, <options>)` which calls `self._update()` repeatedly.
-
+Different models go in the `algorithms` folder, and inherit from the `ReconstructionAlgorithm` abstract class. The
+abstract class provides a method `apply(image, <options>)` which calls `self._update()` repeatedly.
 
 To implement a new reconstruction algorithm (see `algorithms/admm.py` for reference):
 

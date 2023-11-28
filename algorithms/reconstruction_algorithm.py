@@ -3,7 +3,7 @@ import abc
 import numpy as np
 from matplotlib import pyplot as plt
 
-from utils import RealFFTConvolve2D, plot_image
+from utils import plot_image
 
 
 class ReconstructionAlgorithm(abc.ABC):
