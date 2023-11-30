@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import torch
-from torchmetrics.image import lpip, psnr
+from torchmetrics.image import lpip, psnr, ssim, vif
 
 from algorithms.admm import ADMM
 from utils import load_psf_and_image, to_absolute_path, plot_image, load_image
@@ -32,6 +32,9 @@ def evaluate_reconstruction(reconstructed, original):
     # compute metrics
     lpips_func = lpip.LearnedPerceptualImagePatchSimilarity(net_type="vgg", normalize=True)
     psnr_funct = psnr.PeakSignalNoiseRatio()
+    ssim_funct = psnr.StructuralSimilarityIndexMeasure()
+    vif_funct = psnr.VisualInformationFidelity()
+
     img_torch = torch.from_numpy(reconstructed).float()
     original_torch = torch.from_numpy(original).unsqueeze(0)
 
@@ -43,10 +46,14 @@ def evaluate_reconstruction(reconstructed, original):
     img_torch = img_torch / torch.amax(img_torch)
 
     # compute metrics
-    lpips = lpips_func(img_torch, original_torch)
+    lpips_value = lpips_func(img_torch, original_torch)
     psnr_value = psnr_funct(img_torch, original_torch)
-    print(f"LPIPS : {lpips}")
+    ssim_value = ssim_funct(img_torch, original_torch)
+    vif_value = vif_funct(img_torch, original_torch)
+    print(f"LPIPS : {lpips_value}")
     print(f"PSNR : {psnr_value}")
+    print(f"SSIM : {ssim_value}")
+    print(f"VIF : {vif_value}")
 
 
 if __name__ == "__main__":
