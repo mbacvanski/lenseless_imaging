@@ -1,8 +1,7 @@
 import numpy as np
-from scipy import fft
 
 from algorithms.reconstruction_algorithm import ReconstructionAlgorithm
-from utils import finite_diff_gram, finite_diff, finite_diff_adj, soft_thresh, RealFFTConvolve2D
+from utils import RealFFTConvolve2D
 
 
 # noinspection PyPep8Naming
@@ -27,18 +26,20 @@ class gradient_descent(ReconstructionAlgorithm):
         self._psf = psf.astype(np.float32)
         self._convolver = RealFFTConvolve2D(psf, norm=norm)
         self._padded_shape = self._convolver._padded_shape
-        super(GD, self).__init__(psf, norm=norm)
+        super(gradient_descent, self).__init__(psf, norm=norm)
 
     def reset(self):
         self._image_est = np.zeros(self._padded_shape, dtype=np.float32)
         self._step_size = np.real(1.8/np.max(self._convolver._H * self._convolver._Hadj))
         self._alpha = np.real(1.8 / np.max(self._convolver._Hadj * self._convolver._H, axis=0))
 
-    def _update(self, iteration):
+    def _grad(self):
         Av = self._convolver.convolve(self._image_est)
         diff = Av - self._convolver.pad(self._image)
-        grad = np.real(self._convolver.deconvolve(diff))
-        self._image_est = self._image_est - self._step_size * grad
+        return np.real(self._convolver.deconvolve(diff))
+
+    def _update(self, iteration):
+        self._image_est = self._image_est - self._step_size * self._grad()
         self._image_est = np.maximum(self._image_est, 0)
 
     def _form_image(self):
