@@ -1,8 +1,7 @@
 import numpy as np
-from scipy import fft
 
 from algorithms.reconstruction_algorithm import ReconstructionAlgorithm
-from utils import finite_diff_gram, finite_diff, finite_diff_adj, soft_thresh, RealFFTConvolve2D
+from utils import RealFFTConvolve2D
 
 
 # noinspection PyPep8Naming
@@ -27,7 +26,7 @@ class gradient_descent(ReconstructionAlgorithm):
         self._psf = psf.astype(np.float32)
         self._convolver = RealFFTConvolve2D(psf, norm=norm)
         self._padded_shape = self._convolver._padded_shape
-        super(GD, self).__init__(psf, norm=norm)
+        super(gradient_descent, self).__init__(psf, norm=norm)
 
     def reset(self):
         self._image_est = np.zeros(self._padded_shape, dtype=np.float32)
