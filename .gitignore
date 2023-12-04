@@ -78,3 +78,4 @@ Temporary Items
 !.vscode/*.code-snippets
 .history/
 *.vsix
+algorithms/__pycache__
