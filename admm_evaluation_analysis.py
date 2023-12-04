@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import torch
 from torchmetrics.image import lpip, psnr, ssim, vif
 
+import time 
+
 from algorithms.admm import ADMM
 from utils import load_psf_and_image, to_absolute_path, plot_image, load_image
 
@@ -24,7 +26,7 @@ def run_admm(filename):
 
     reconstructor = ADMM(psf)
 
-    res = reconstructor.apply(image, disp_iter=50)
+    res = reconstructor.apply(image, disp_iter=1000)
     reconstructed = res[0]
     #plt.show()
 
@@ -73,6 +75,8 @@ def evaluate_reconstruction(filename, reconstructed, original):
 
 if __name__ == "__main__":
 
+    startTime = time.time()
+
     #get files
     mypath = "/Users/ishapuri/Desktop/final_opt_project/lenseless_imaging/data/diffuser"
     from os import listdir
@@ -108,3 +112,7 @@ if __name__ == "__main__":
         print(str(metric) + " Average: ", averages[i])
 
 
+
+    endTime = time.time()
+
+    print("\nTime Taken: ", endTime - startTime)
