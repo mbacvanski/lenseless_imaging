@@ -46,7 +46,3 @@ class gradient_descent(ReconstructionAlgorithm):
         image = self._convolver.crop(self._image_est)
         image[image < 0] = 0
         return image
-    
-    def apply(self, image: np.ndarray, n_iter=100, disp_iter=20, eval_iter=50, ax=None, reset=True):
-        self._image_est = (np.max(self._psf) + np.min(self._psf)) * self._convolver.pad(np.ones(self._psf.shape, dtype=np.float32)) / 2
-        return super().apply(image, n_iter, disp_iter, eval_iter, ax, reset)
