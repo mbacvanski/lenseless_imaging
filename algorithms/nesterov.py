@@ -27,7 +27,7 @@ class nesterov_gradient_descent(gradient_descent):
         """
         self._p = p
         self._mu = mu
-        super(nesterov_gradient_descent, self).__init__(psf, gt=None, norm=norm)
+        super(nesterov_gradient_descent, self).__init__(psf=psf, gt=gt, norm=norm)
 
     def reset(self, p=0, mu=0.9):
         self._p = p

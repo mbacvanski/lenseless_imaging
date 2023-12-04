@@ -25,7 +25,7 @@ class FISTA(gradient_descent):
         """
         self._init_tk = tk
         self._tk = tk
-        super(FISTA, self).__init__(psf, gt=None, norm=norm)
+        super(FISTA, self).__init__(psf, gt=gt, norm=norm)
         self._xk = self._image_est
 
     def reset(self, p=0, mu=0.9):
