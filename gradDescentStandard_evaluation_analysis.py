@@ -15,7 +15,7 @@ import csv
 import pandas as pd
 
 
-def run_admm(filename):
+def run_standardGD(filename):
     # downsample the psf by 4 because images are of size 270x480 while the PSF is of size 1920x1080
 
     ORIGINAL_IMAGE = "data/lensed/" + filename 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     for filename in onlyfiles:
         if ".DS_Store" not in filename:
             print("FILENAME: ", filename)
-            result = run_admm(filename)
+            result = run_standardGD(filename)
             results.append(result)#results[filename] = result
     print(results)
 
