@@ -10,7 +10,7 @@ class FISTA(gradient_descent):
     Object for applying gradient descent with nestrov momentum
     """
 
-    def __init__(self, psf, tk=1.0, norm="backward"):
+    def __init__(self, psf, gt=None, tk=1.0, norm="backward"):
         """
         Parameters
         ----------
@@ -25,7 +25,7 @@ class FISTA(gradient_descent):
         """
         self._init_tk = tk
         self._tk = tk
-        super(FISTA, self).__init__(psf, norm=norm)
+        super(FISTA, self).__init__(psf, gt=None, norm=norm)
         self._xk = self._image_est
 
     def reset(self, p=0, mu=0.9):

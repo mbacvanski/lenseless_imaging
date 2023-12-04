@@ -10,7 +10,7 @@ class nesterov_gradient_descent(gradient_descent):
     Object for applying gradient descent with nestrov momentum
     """
 
-    def __init__(self, psf, p=0, mu =0.9, norm="backward"):
+    def __init__(self, psf, gt=None, p=0, mu =0.9, norm="backward"):
         """
         Parameters
         ----------
@@ -27,7 +27,7 @@ class nesterov_gradient_descent(gradient_descent):
         """
         self._p = p
         self._mu = mu
-        super(nesterov_gradient_descent, self).__init__(psf, norm=norm)
+        super(nesterov_gradient_descent, self).__init__(psf, gt=None, norm=norm)
 
     def reset(self, p=0, mu=0.9):
         self._p = p

@@ -15,7 +15,7 @@ class ADMM(ReconstructionAlgorithm):
     Slides about ADMM: https://web.stanford.edu/class/ee364b/lectures/admm_slides.pdf
     """
 
-    def __init__(self, psf, mu1=1e-6, mu2=1e-5, mu3=4e-5, tau=0.0001, norm="backward"):
+    def __init__(self, psf, gt=None, mu1=1e-6, mu2=1e-5, mu3=4e-5, tau=0.0001, norm="backward"):
         """
         Parameters
         ----------
@@ -51,7 +51,7 @@ class ADMM(ReconstructionAlgorithm):
         assert len(psf.shape) == 4, "PSF must be 4D: (depth, height, width, channels)."
 
         # call reset() to initialize matrices
-        super(ADMM, self).__init__(psf, norm=norm)
+        super(ADMM, self).__init__(psf=psf, gt=gt, norm=norm)
 
         # set prior
         self._PsiTPsi = finite_diff_gram(self._padded_shape)

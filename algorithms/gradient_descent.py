@@ -10,7 +10,7 @@ class gradient_descent(ReconstructionAlgorithm):
     Object for applying conventional gradient descent
     """
 
-    def __init__(self, psf, norm="backward"):
+    def __init__(self, psf, gt=None, norm="backward"):
         """
         Parameters
         ----------
@@ -26,7 +26,7 @@ class gradient_descent(ReconstructionAlgorithm):
         self._psf = psf.astype(np.float32)
         self._convolver = RealFFTConvolve2D(psf, norm=norm)
         self._padded_shape = self._convolver._padded_shape
-        super(gradient_descent, self).__init__(psf, norm=norm)
+        super(gradient_descent, self).__init__(psf=psf, gt=gt, norm=norm)
 
     def reset(self):
         self._image_est = np.zeros(self._padded_shape, dtype=np.float32)
@@ -47,6 +47,6 @@ class gradient_descent(ReconstructionAlgorithm):
         image[image < 0] = 0
         return image
     
-    def apply(self, image: np.ndarray, n_iter=10, disp_iter=10, ax=None, reset=True):
+    def apply(self, image: np.ndarray, n_iter=100, disp_iter=20, eval_iter=50, ax=None, reset=True):
         self._image_est = (np.max(self._psf) + np.min(self._psf)) * self._convolver.pad(np.ones(self._psf.shape, dtype=np.float32)) / 2
-        return super().apply(image, n_iter, disp_iter, ax, reset)
+        return super().apply(image, n_iter, disp_iter, eval_iter, ax, reset)
