@@ -113,7 +113,7 @@ def resize(img, factor=None, shape=None):
     return np.clip(resized, min_val, max_val)
 
 
-def plot_image(img) -> plt.Axes:
+def plot_image(img, ax=None) -> plt.Axes:
     """
     Plot image data, correcting for gamma
     """
@@ -144,7 +144,8 @@ def plot_image(img) -> plt.Axes:
     for i in range(len(img_norm)):
         img_norm[i] = disp_img[i] / max_val[i]
 
-    _, ax = plt.subplots()
+    if ax is None:
+        _, ax = plt.subplots()
     ax.imshow(img_norm[0], cmap=cmap)
 
     return ax

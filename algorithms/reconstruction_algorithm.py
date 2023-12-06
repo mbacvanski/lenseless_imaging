@@ -131,7 +131,7 @@ class ReconstructionAlgorithm(abc.ABC):
 
 
 
-    def apply(self, image: np.ndarray, n_iter=10, disp_iter=10, eval_iter=50, ax=None, reset=True):
+    def apply(self, image: np.ndarray, n_iter=10, disp_iter=10, eval_iter=50, ax=None, reset=True, verbose=True):
         """
         Method for performing iterative reconstruction. Note that `set_data`
         must be called beforehand.
@@ -175,7 +175,7 @@ class ReconstructionAlgorithm(abc.ABC):
                 img = self._form_image()
                 plot_image(img[0])
         evals = []
-        for i in tqdm(range(n_iter)):
+        for i in tqdm(range(n_iter), disable=not verbose):
             self._update(i)
             if disp_iter is not None and (i + 1) % disp_iter == 0:
                 self._progress()
