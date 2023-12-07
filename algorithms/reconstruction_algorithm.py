@@ -26,7 +26,7 @@ class ReconstructionAlgorithm(abc.ABC):
     #. Applying the algorithm.
     """
 
-    def __init__(self, psf, gt=None, **kwargs):
+    def __init__(self, psf, gt=None, norm='backward', **kwargs):
         """
         Base constructor. Derived constructor may define new state variables
         here and also reset them in `reset`.
@@ -64,6 +64,9 @@ class ReconstructionAlgorithm(abc.ABC):
         self._lpips_funct = LearnedPerceptualImagePatchSimilarity(net_type="vgg", normalize=True)
         self._vif_funct = VisualInformationFidelity()
 
+        self._convolver = RealFFTConvolve2D(psf, norm=norm)
+        self._padded_shape = self._convolver._padded_shape
+
         self.reset()
 
     @abc.abstractmethod
@@ -99,7 +102,7 @@ class ReconstructionAlgorithm(abc.ABC):
         computes l2 loss for the current iteration
         """
         convolver = RealFFTConvolve2D(self._psf, norm="backward")
-        Av = convolver.convolve(self._image_est)
+        Av = convolver.convolve(self._image_est).detach().numpy()
         diff = convolver.crop(Av) - self._image
         return np.linalg.norm(diff)
 
@@ -112,7 +115,7 @@ class ReconstructionAlgorithm(abc.ABC):
             raise ValueError("Ground truth not provided.")
         cur_img = self._form_image()[0]
         gt_img = self._gt
-        cur_img_torch = torch.from_numpy(cur_img).float()
+        cur_img_torch = torch.from_numpy(cur_img).float() if not isinstance(cur_img, torch.Tensor) else cur_img.unsqueeze(0)
         gt_img_torch = torch.from_numpy(gt_img).unsqueeze(0)
 
         # channel as first dimension
@@ -166,6 +169,8 @@ class ReconstructionAlgorithm(abc.ABC):
         assert np.all(self._psf_shape[-3:-1] == np.array(image.shape)[-3:-1]), "PSF and data shape mismatch"
 
         self._image = image[None, None, ...]
+        self._image_torch = torch.from_numpy(self._image)
+        self._padded_image = torch.from_numpy(self._convolver.pad(self._image))
 
         if reset:
             self.reset()

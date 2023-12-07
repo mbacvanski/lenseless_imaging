@@ -113,7 +113,7 @@ class ADMM(ReconstructionAlgorithm):
         self._image_update()
 
         # update forward and sparse operators
-        self._forward_out = self._convolver.convolve(self._image_est)
+        self._forward_out = self._convolver.convolve(self._image_est).numpy()
         self._Psi_out = finite_diff(self._image_est)
 
         self._xi_update()

@@ -5,7 +5,6 @@ import numpy as np
 import torch
 import torchvision
 from matplotlib import pyplot as plt
-from scipy import fft
 from scipy.fftpack import next_fast_len
 
 
@@ -343,8 +342,9 @@ class RealFFTConvolve2D:
         self._end_idx = self._start_idx + self._psf_shape[-3:-1]
 
         # precompute filter in frequency domain
-        self._H = fft.rfft2(self.pad(self._psf), axes=(-3, -2), norm=norm)
-        self._Hadj = np.conj(self._H)
+        # self._H = fft.rfft2(self.pad(self._psf), axes=(-3, -2), norm=norm)
+        self._H = torch.fft.rfftn(torch.from_numpy(self.pad(self._psf)), dim=(-3, -2), norm=norm)
+        self._Hadj = torch.conj(self._H)
         self._padded_data = np.zeros(self._padded_shape)
 
     def crop(self, x):
@@ -363,14 +363,40 @@ class RealFFTConvolve2D:
         return vpad
 
     def convolve(self, x):
-        """ Convolve with pre-computed FFT of provided PSF. """
-        self._padded_data[:] = x  # .astype(self.dtype)
-        conv_output = fft.ifftshift(fft.irfft2(fft.rfft2(self._padded_data, axes=(-3, -2)) * self._H, axes=(-3, -2)), axes=(-3, -2), )
-        return conv_output
+        # # check type of x
+        # if isinstance(x, np.ndarray):
+        #     x = torch.from_numpy(x)
+
+        # Real-to-complex Fourier transform
+        data_ft = torch.fft.rfftn(x, dim=(-3, -2))
+
+        # Multiplication in Fourier domain
+        conv_result_ft = data_ft * self._H
+
+        # Inverse complex-to-real Fourier transform
+        conv_result = torch.fft.irfftn(conv_result_ft, s=x.shape[-3:-1], dim=(-3, -2))
+
+        # Shifting the zero frequency component
+        conv_result = torch.fft.fftshift(conv_result, dim=(-3, -2))
+
+        return conv_result
 
     def deconvolve(self, y):
         """ Deconvolve with adjoint of pre-computed FFT of provided PSF. """
-        self._padded_data[:] = y  # .astype(self.dtype)
-        deconv_output = fft.ifftshift(fft.irfft2(fft.rfft2(self._padded_data, axes=(-3, -2)) * self._Hadj, axes=(-3, -2)), axes=(-3, -2), )
+        # Convert y to PyTorch tensor if it is not already
+        if not isinstance(y, torch.Tensor):
+            y = torch.from_numpy(y)
+
+        # Real-to-complex Fourier transform
+        padded_data_ft = torch.fft.rfftn(y, dim=(-3, -2))
+
+        # Multiplication in Fourier domain with the adjoint
+        deconv_result_ft = padded_data_ft * self._Hadj
+
+        # Inverse complex-to-real Fourier transform
+        deconv_result = torch.fft.irfftn(deconv_result_ft, s=y.shape[-3:-1], dim=(-3, -2))
+
+        # Shifting the zero frequency component
+        deconv_output = torch.fft.fftshift(deconv_result, dim=(-3, -2))
 
         return deconv_output
