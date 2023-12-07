@@ -38,8 +38,13 @@ class gradient_descent(ReconstructionAlgorithm):
         diff = Av - self._convolver.pad(self._image)
         return np.real(self._convolver.deconvolve(diff))
 
-    def _update(self, iteration):
-        self._image_est = self._image_est - self._step_size * self._grad()
+    def _update(self, iteration, prior=None, alpha=0.01):
+        if prior == 'sparse':
+            self._image_est = self._image_est - self._step_size * self._grad() + self.sparsity_prior(alpha)
+        elif prior == 'tv':
+            self._image_est = self._image_est - self._step_size * self._grad() + self.tv_prior(alpha)
+        else:
+            self._image_est = self._image_est - self._step_size * self._grad()
         self._image_est = np.maximum(self._image_est, 0)
 
     def _form_image(self):

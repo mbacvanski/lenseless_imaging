@@ -33,10 +33,15 @@ class FISTA(gradient_descent):
         super(FISTA, self).reset()
         self._xk = self._image_est
 
-    def _update(self, iteration):
+    def _update(self, iteration, prior=None, alpha=0.01):
         self._image_est = self._image_est - self._step_size * self._grad()
         xk = np.maximum(self._image_est, 0)
         tk = (1 + np.sqrt(1 + 4 * self._tk**2)) / 2
-        self._image_est = xk + (self._tk - 1) / tk * (xk - self._xk)
+        if prior == 'sparse':
+            self._image_est = xk + (self._tk - 1) / tk * (xk - self._xk) + self.sparsity_prior(alpha)
+        elif prior == 'tv':
+            self._image_est = xk + (self._tk - 1) / tk * (xk - self._xk) + self.tv_prior(alpha)
+        else:
+            self._image_est = xk + (self._tk - 1) / tk * (xk - self._xk)
         self._xk = xk
         self._tk = tk

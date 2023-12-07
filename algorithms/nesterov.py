@@ -34,9 +34,14 @@ class nesterov_gradient_descent(gradient_descent):
         self._mu = mu
         super(nesterov_gradient_descent, self).reset()
 
-    def _update(self, iteration):
+    def _update(self, iteration, prior=None, alpha=0.01):
         last_p = self._p
         self._p = self._mu * self._p - self._step_size * self._grad()
         diff = -self._mu * last_p + (1 + self._mu) * self._p
-        self._image_est = self._image_est + diff
+        if prior == 'sparse':
+            self._image_est = self._image_est + diff + self.sparsity_prior(alpha)
+        elif prior == 'tv':
+            self._image_est = self._image_est + diff + self.tv_prior(alpha)
+        else:
+            self._image_est = self._image_est + diff
         self._image_est = np.maximum(self._image_est, 0)
