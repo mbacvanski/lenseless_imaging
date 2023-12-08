@@ -53,7 +53,7 @@ class ReconstructionAlgorithm(abc.ABC):
         assert len(psf.shape) == 4, "PSF must be 4D: (depth, height, width, channels)."
         assert psf.shape[3] == 3 or psf.shape[3] == 1, "PSF must either be rgb (3) or grayscale (1)"
 
-        self._psf_shape = np.array(psf.shape)
+        self._psf_shape = psf.shape
         self._psf = psf.astype(np.float32)
 
         self._gt = gt
@@ -101,10 +101,18 @@ class ReconstructionAlgorithm(abc.ABC):
         """
         computes l2 loss for the current iteration
         """
-        convolver = RealFFTConvolve2D(self._psf, norm="backward")
-        Av = convolver.convolve(self._image_est).detach().numpy()
-        diff = convolver.crop(Av) - self._image
-        return np.linalg.norm(diff)
+        # convolver = RealFFTConvolve2D(self._psf, norm="backward")
+        # Av = self._convolver.convolve(self._image_est).detach().numpy()
+        # diff = self._convolver.crop(Av) - self._image
+        # return np.power(diff, 2).mean()
+        # return np.linalg.norm(diff)
+
+        forward_pass = self._convolver.convolve(self._image_est)
+        return torch.nn.functional.mse_loss(forward_pass, self._padded_image)
+
+        # forward_pass = self._convolver.convolve(self._image_est)
+        # loss = torch.nn.functional.mse_loss(forward_pass, self._padded_image)
+        # return loss.item()
 
 
     def evaluate(self):
@@ -115,7 +123,7 @@ class ReconstructionAlgorithm(abc.ABC):
             raise ValueError("Ground truth not provided.")
         cur_img = self._form_image()[0]
         gt_img = self._gt
-        cur_img_torch = torch.from_numpy(cur_img).float() if not isinstance(cur_img, torch.Tensor) else cur_img.unsqueeze(0)
+        cur_img_torch = torch.from_numpy(cur_img).float() if isinstance(cur_img, np.ndarray) else cur_img.float()
         gt_img_torch = torch.from_numpy(gt_img).unsqueeze(0)
 
         # channel as first dimension
@@ -170,7 +178,8 @@ class ReconstructionAlgorithm(abc.ABC):
 
         self._image = image[None, None, ...]
         self._image_torch = torch.from_numpy(self._image)
-        self._padded_image = torch.from_numpy(self._convolver.pad(self._image))
+        # self._padded_image = torch.from_numpy(self._convolver.pad(self._image))
+        self._padded_image = self._convolver.pad(self._image)
 
         if reset:
             self.reset()

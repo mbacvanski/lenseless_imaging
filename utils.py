@@ -156,19 +156,28 @@ def finite_diff_gram(shape):
     gram[0, 0, 0] = 4
     gram[0, 0, 1] = gram[0, 0, -1] = gram[0, 1, 0] = gram[0, -1, 0] = -1
 
-    return fft.rfft2(gram, axes=(-3, -2))
+    return np.fft.rfft2(gram, axes=(-3, -2))
 
 
 def finite_diff(x):
     """Gradient of image estimate, approximated by finite difference. Space where image is assumed sparse."""
-    return np.stack((np.roll(x, 1, axis=-3) - x, np.roll(x, 1, axis=-2) - x), axis=len(x.shape), )
+    if isinstance(x, np.ndarray):
+        return np.stack((np.roll(x, 1, axis=-3) - x, np.roll(x, 1, axis=-2) - x), axis=len(x.shape), )
+    else:
+        return torch.stack((torch.roll(x, 1, dims=-3) - x, torch.roll(x, 1, dims=-2) - x), dim=len(x.shape))
 
 
 def finite_diff_adj(x):
     """Adjoint of finite difference operator."""
-    diff1 = np.roll(x[..., 0], -1, axis=-3) - x[..., 0]
-    diff2 = np.roll(x[..., 1], -1, axis=-2) - x[..., 1]
-    return diff1 + diff2
+    # check if x is numpy array
+    if isinstance(x, np.ndarray):
+        diff1 = np.roll(x[..., 0], -1, axis=-3) - x[..., 0]
+        diff2 = np.roll(x[..., 1], -1, axis=-2) - x[..., 1]
+        return diff1 + diff2
+    else:
+        diff1 = torch.roll(x[..., 0], -1, dims=-3) - x[..., 0]
+        diff2 = torch.roll(x[..., 1], -1, dims=-2) - x[..., 1]
+        return diff1 + diff2
 
 
 def soft_thresh(x, thresh):
@@ -343,7 +352,7 @@ class RealFFTConvolve2D:
 
         # precompute filter in frequency domain
         # self._H = fft.rfft2(self.pad(self._psf), axes=(-3, -2), norm=norm)
-        self._H = torch.fft.rfftn(torch.from_numpy(self.pad(self._psf)), dim=(-3, -2), norm=norm)
+        self._H = torch.fft.rfftn(self.pad(self._psf), dim=(-3, -2), norm=norm)
         self._Hadj = torch.conj(self._H)
         self._padded_data = np.zeros(self._padded_shape)
 
@@ -358,8 +367,8 @@ class RealFFTConvolve2D:
         else:
             raise ValueError("Expected 4D or 5D tensor")
         shape = [batch_size] + self._padded_shape
-        vpad = np.zeros(shape).astype(v.dtype)
-        vpad[..., self._start_idx[0]: self._end_idx[0], self._start_idx[1]: self._end_idx[1], :] = v
+        vpad = torch.zeros(shape)
+        vpad[..., self._start_idx[0]: self._end_idx[0], self._start_idx[1]: self._end_idx[1], :] = torch.tensor(v)
         return vpad
 
     def convolve(self, x):

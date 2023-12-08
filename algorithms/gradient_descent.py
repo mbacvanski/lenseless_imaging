@@ -31,7 +31,7 @@ class gradient_descent(ReconstructionAlgorithm):
         # Assuming self._padded_shape is a tuple representing the shape
         self._image_est = torch.zeros(self._padded_shape, dtype=torch.float32)
         # self._image_est = torch.rand(self._padded_shape, dtype=torch.float32)
-        # self._image_est = torch.ones(self._padded_shape, dtype=torch.float32)
+        # self._image_est = torch.ones(self._padded_shape, dtype=torch.float32) * 127
 
         step_size_numerator = torch.abs(self._convolver._H * self._convolver._Hadj)
         self._step_size = 1.8 / torch.max(step_size_numerator).real
@@ -40,33 +40,31 @@ class gradient_descent(ReconstructionAlgorithm):
         self._grad_history = []
         self._computed_grad_history = []
 
-
-    def _update(self, iteration):
+    def _grad(self):
+        """
+        Calculate the gradient of the loss with respect to the image estimate.
+        """
         if self._image_est.grad is not None:
+            self._image_est = self._image_est.clone()
             self._image_est.grad.zero_()
-
-        self._image_est.requires_grad = True
+            self._image_est.requires_grad = True
 
         forward_pass = self._convolver.convolve(self._image_est)
-        loss = torch.nn.functional.smooth_l1_loss(forward_pass, self._padded_image)
-        # # loss = torch.nn.functional.l1_loss(forward_pass, self._padded_image)
+        loss = torch.nn.functional.mse_loss(forward_pass, self._padded_image)
         self._losses_history.append(loss.item())
 
         loss.backward()
-        grad = self._image_est.grad  # take derivative of loss with respect to self._image_est
-        self._grad_history.append(grad.detach().numpy())
+        grad = self._image_est.grad
+        self._image_est = self._image_est.detach()
+        return grad  # derivative of loss with respect to self._image_est
 
-        # Av = self._convolver.convolve(self._image_est)
-        # diff = Av - self._padded_image
-        # grad = np.real(self._convolver.deconvolve(diff)).squeeze(0)
-        # self._computed_grad_history.append(computed_grad.detach().numpy())
+    def _update(self, iteration):
+        grad = self._grad()  # Call the new grad method
+        self._grad_history.append(grad.detach().numpy())
 
         with torch.no_grad():  # disable gradient tracking
             self._image_est -= self._step_size * grad * 1e6
             self._image_est = torch.clamp(self._image_est, min=0, max=1)
-
-        # Detach self._image_est from the current computation graph
-        self._image_est = self._image_est.detach()
 
     def _form_image(self):
         image = self._convolver.crop(self._image_est)

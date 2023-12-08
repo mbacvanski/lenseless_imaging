@@ -1,7 +1,7 @@
 import numpy as np
+import torch
 
 from algorithms.gradient_descent import gradient_descent
-from utils import RealFFTConvolve2D
 
 
 # noinspection PyPep8Naming
@@ -10,7 +10,7 @@ class nesterov_gradient_descent(gradient_descent):
     Object for applying gradient descent with nestrov momentum
     """
 
-    def __init__(self, psf, gt=None, p=0, mu =0.9, norm="backward"):
+    def __init__(self, psf, gt=None, p=0, mu=0.9, norm="backward"):
         """
         Parameters
         ----------
@@ -39,4 +39,9 @@ class nesterov_gradient_descent(gradient_descent):
         self._p = self._mu * self._p - self._step_size * self._grad()
         diff = -self._mu * last_p + (1 + self._mu) * self._p
         self._image_est = self._image_est + diff
-        self._image_est = np.maximum(self._image_est, 0)
+        self._image_est = torch.maximum(self._image_est, torch.tensor(0))
+
+    def _grad(self):
+        Av = self._convolver.convolve(self._image_est)
+        diff = Av - self._convolver.pad(self._image)
+        return np.real(self._convolver.deconvolve(diff))
